@@ -14,7 +14,7 @@ class JuegoMemoria:
         self.raiz.title("Juego de Memoria")
         self.raiz.resizable(0, 0)
         self.raiz.geometry("500x500")
-        self.raiz.config(bg=CELESTE)
+        self.raiz.iconbitmap("icono.ico")
         self.componentes()
 
     def componentes(self):       
@@ -22,11 +22,11 @@ class JuegoMemoria:
         self.imagenFondo = self.imagenFondo.resize((500, 500))
         self.imagenFondo = ImageTk.PhotoImage(self.imagenFondo)
 
-        self.canvas = Canvas(self.raiz, width=500, height=500)
+        self.canvas = Canvas(self.raiz, width=500, height=500, bg="#8FB7F2")
         self.canvas.pack()
         self.canvas.create_image(0, 0, anchor=NW, image=self.imagenFondo)
 
-        self.tituloJuego = Label(self.raiz, text="¡Juego de Memoria!", font=("Arial", 24), fg=AMARILLO)
+        self.tituloJuego = Label(self.raiz, text="¡Juego de Memoria!", font=("Arial", 24), fg="white" ,bg="#8FB7F2")
         self.tituloJuego.place(x=105, y=70)
 
         self.opcionLetraNumero = IntVar(value=2)
@@ -101,10 +101,20 @@ class JuegoMemoria:
         ventanaLetras.config(bd=5)
         ventanaLetras.config(relief="ridge")
         ventanaLetras.config(cursor="hand2")
+        ventanaLetras.iconbitmap("icono.ico")
         ventana2 = Frame(ventanaLetras)
+        volver_btn = Button(ventanaLetras, text="Volver", bg=CELESTE, fg="white" , command=lambda: self.volver(ventanaLetras))
+        volver_btn.pack(side="bottom", fill="x")
+
         ventana2.pack(anchor="w")
         self.generarBotones(ventana2, elemento)
         self.raiz.iconify()
+
+    def volver(self, ventanaLetras ):
+        ventanaLetras.destroy()
+        raiz.iconify()  
+        raiz.update()  
+        raiz.deiconify() 
 
     def cerrarJuego(self):
         self.raiz.destroy()
