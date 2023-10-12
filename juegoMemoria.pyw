@@ -1,6 +1,7 @@
 from tkinter import *
 import random
 from PIL import Image, ImageTk
+import string
 
 ROJO = "#D90707"
 CELESTE = "#668CD9"
@@ -15,6 +16,7 @@ class JuegoMemoria:
         self.raiz.resizable(0, 0)
         self.raiz.geometry("500x500")
         self.raiz.iconbitmap("icono.ico")
+        self.coincidenciasEncontradas = 0
         self.componentes()
 
     def componentes(self):       
@@ -53,44 +55,90 @@ class JuegoMemoria:
                                   command=self.cerrarJuego)
         self.buttonSalir.place(x=225, y=400)
 
+    def limpiarJuego(self):
+        self.coincidenciasEncontradas = 0
+        self.botones = []
+        self.jugada = []
+        self.numeroBotonesVolteados = 0
+
     def comenzarJuego(self):
+        self.limpiarJuego()
         tipo = self.opcionLetraNumero.get()
         dificultad = self.dificultadOpcion.get()
         self.ventanaLetras(tipo, dificultad)
 
-    def mostarValorBotones(self, valor, boton):
-        boton.config(text=str(valor))
-
     def generarBotones(self, ventana, elementos):
         random.shuffle(elementos)
-        elementos_repetidos = elementos * 2
-        random.shuffle(elementos_repetidos)
+        elementosRepetidos = elementos * 2
+        random.shuffle(elementosRepetidos)
         colores = [ROJO, CELESTE, NARANJA, AMARILLO, VIOLETA]
 
-        longitud_array = len(elementos)
+        longitudArray = len(elementos)
 
-        if longitud_array == 8:
+        if longitudArray == 8:
             filas = 4
             columnas = 4
-        elif longitud_array == 12:
+        elif longitudArray == 12:
             filas = 4
             columnas = 6
         else:
             filas = 4
             columnas = 8
 
+        self.botones = [] 
+        self.jugada = []  
+        self.numeroBotonesVolteados = 0
+
         for i in range(filas):
             for j in range(columnas):
                 color = colores[(i * 4 + j) % len(colores)]
-                elemento = elementos_repetidos.pop()
+                elemento = elementosRepetidos.pop()
                 texto = ""
-                boton = Button(ventana, text=texto, bg=color, width=12, height=5, font=("helvetica", 12), fg="white")
-                boton.grid(row=i, column=j)
-                boton.config(command=lambda valor=elemento, boton=boton: self.mostarValorBotones(valor, boton))
+                botonInfo = {"valor": elemento, "visible": False, "boton": None}  
+                
+                boton = Button(ventana, text=texto, bg=color, width=7, height=3 , font=("helvetica", 20), fg="white")
+                boton.grid(row=i, column=j)                
+               
+                boton.botonInfo = botonInfo               
+             
+                boton.config(command=lambda btn=boton: self.voltearBoton(btn))
 
+                botonInfo["boton"] = boton
+                self.botones.append(botonInfo)
+
+    def voltearBoton(self, boton):
+            botonInfo = boton.botonInfo
+
+            if not botonInfo["visible"] and self.numeroBotonesVolteados < 2:
+                boton.config(text=botonInfo["valor"])
+                botonInfo["visible"] = True
+                self.jugada.append(botonInfo)
+                self.numeroBotonesVolteados += 1
+
+                if self.numeroBotonesVolteados == 2:
+                    self.raiz.after(1000, self.validarCoincidencia)
+
+    def validarCoincidencia(self):
+        if len(self.jugada) == 2:
+            if self.jugada[0]["valor"] == self.jugada[1]["valor"]:
+                self.numeroBotonesVolteados = 0
+                self.jugada = []
+                self.coincidenciasEncontradas += 1              
+                if self.coincidenciasEncontradas == len(self.botones) // 2:
+                    self.mostrarVictoria()
+            else:
+                self.raiz.after(200, self.ocultarBotones)
+
+    def ocultarBotones(self):
+        for b in self.jugada:
+            b["boton"].config(text="")
+            b["boton"].botonInfo["visible"] = False
+        self.numeroBotonesVolteados = 0
+        self.jugada = []
+ 
     def ventanaLetras(self, tipo, dificultad):
-        if tipo == 1:
-            elemento = [chr(ord('A') + i) for i in range(dificultad)]
+        if tipo == 1:         
+            elemento = random.sample(string.ascii_uppercase, dificultad)
         if tipo == 2:
             elemento = list(range(1, dificultad + 1))
 
@@ -103,12 +151,23 @@ class JuegoMemoria:
         ventanaLetras.config(cursor="hand2")
         ventanaLetras.iconbitmap("icono.ico")
         ventana2 = Frame(ventanaLetras)
-        volver_btn = Button(ventanaLetras, text="Volver", bg=CELESTE, fg="white" , command=lambda: self.volver(ventanaLetras))
-        volver_btn.pack(side="bottom", fill="x")
-
+        botonVolver = Button(ventanaLetras, text="Volver", bg=CELESTE, fg="white" , command=lambda: self.volver(ventanaLetras))
+        botonVolver.pack(side="bottom", fill="x")
         ventana2.pack(anchor="w")
         self.generarBotones(ventana2, elemento)
         self.raiz.iconify()
+    
+    def mostrarVictoria(self):
+        ventanaVictoria = Toplevel(self.raiz)
+        ventanaVictoria.title("¡Ganaste!")
+        ventanaVictoria.iconbitmap("icono.ico")
+        ventanaVictoria.geometry("300x100")
+        ventanaVictoria.configure(bg=CELESTE, relief="ridge", bd=5)
+        ventanaVictoria.resizable(False, False)
+        etiquetaGanaste = Label(ventanaVictoria, text="¡Ganaste!", font=("Arial", 20), bg=CELESTE, fg="white")
+        etiquetaGanaste.pack(pady=20, anchor="center")
+        ventanaVictoria.after(3000, ventanaVictoria.destroy)
+
 
     def volver(self, ventanaLetras ):
         ventanaLetras.destroy()
